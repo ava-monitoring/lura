@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 )
 
@@ -21,4 +22,9 @@ type HTTPClientFactory func(ctx context.Context) *http.Client
 // NewHTTPClient just returns the http default client
 func NewHTTPClient(ctx context.Context) *http.Client { return defaultHTTPClient }
 
-var defaultHTTPClient = &http.Client{}
+func checkRedirect (req *Request, via []*Request) error {
+	fmt.Println("DEBUG: checkRedirect")
+        return http.ErrUseLastResponse
+}
+
+var defaultHTTPClient = &http.Client{CheckRedirect : checkRedirect}
