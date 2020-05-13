@@ -19,11 +19,22 @@ func DefaultHTTPRequestExecutor(clientFactory HTTPClientFactory) HTTPRequestExec
 type HTTPClientFactory func(ctx context.Context) *http.Client
 
 // NewHTTPClient just returns the http default client
-func NewHTTPClient(ctx context.Context) *http.Client { return defaultHTTPClient }
-
-var defaultHTTPClient = &http.Client{
-        CheckRedirect: func(req *http.Request, via []*http.Request) error {
-                // Do not follow redirects
-                return http.ErrUseLastResponse
-        }
+func NewHTTPClient(ctx context.Context) *http.Client {
+	return defaultHTTPClient
 }
+
+func checkRedirect (req *http.Request, via []*http.Request) error {
+        var redirects = via[0].Header.Get("X-Krakend-Follow-Redirects")
+
+        if redirects != "" && redirects == "false" {
+                return http.ErrUseLastResponse
+        } else {
+               cookie := req.Response.Header.Get("Set-Cookie")
+               if len(cookie) > 0 {
+                       req.Header.Add("Cookie", cookie)
+               }
+               return nil
+	}
+}
+
+var defaultHTTPClient = &http.Client{CheckRedirect : checkRedirect}
