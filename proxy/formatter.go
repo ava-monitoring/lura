@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"strings"
 
 	"github.com/devopsfaith/flatmap/tree"
@@ -29,7 +30,7 @@ type entityFormatter struct {
 
 // NewEntityFormatter creates an entity formatter with the received backend definition
 func NewEntityFormatter(remote *config.Backend) EntityFormatter {
-	if ef := newFlatmapFormatter(remote); ef != nil {
+	if ef := newFlatmapFormatter(remote.ExtraConfig, remote.Target, remote.Group); ef != nil {
 		return ef
 	}
 
@@ -75,13 +76,17 @@ func (e entityFormatter) Format(entity Response) Response {
 }
 
 func extractTarget(target string, entity *Response) {
-	if tmp, ok := entity.Data[target]; ok {
-		entity.Data, ok = tmp.(map[string]interface{})
-		if !ok {
+	for _, part := range strings.Split(target, ".") {
+		if tmp, ok := entity.Data[part]; ok {
+			entity.Data, ok = tmp.(map[string]interface{})
+			if !ok {
+				entity.Data = map[string]interface{}{}
+				return
+			}
+		} else {
 			entity.Data = map[string]interface{}{}
+			return
 		}
-	} else {
-		entity.Data = map[string]interface{}{}
 	}
 }
 
@@ -221,6 +226,8 @@ func (e flatmapFormatter) processOps(entity *Response) {
 		switch op.Type {
 		case "move":
 			flatten.Move(op.Args[0], op.Args[1])
+		case "append":
+			flatten.Append(op.Args[0], op.Args[1])
 		case "del":
 			flatten.Del(op.Args[0])
 		default:
@@ -230,8 +237,8 @@ func (e flatmapFormatter) processOps(entity *Response) {
 	entity.Data, _ = flatten.Get([]string{}).(map[string]interface{})
 }
 
-func newFlatmapFormatter(remote *config.Backend) EntityFormatter {
-	if v, ok := remote.ExtraConfig[Namespace]; ok {
+func newFlatmapFormatter(cfg config.ExtraConfig, target, group string) EntityFormatter {
+	if v, ok := cfg[Namespace]; ok {
 		if e, ok := v.(map[string]interface{}); ok {
 			if vs, ok := e[flatmapKey].([]interface{}); ok {
 				if len(vs) == 0 {
@@ -263,12 +270,35 @@ func newFlatmapFormatter(remote *config.Backend) EntityFormatter {
 					return nil
 				}
 				return &flatmapFormatter{
-					Target: remote.Target,
-					Prefix: remote.Group,
+					Target: target,
+					Prefix: group,
 					Ops:    ops,
 				}
 			}
 		}
 	}
 	return nil
+}
+
+// NewFlatmapMiddleware creates a proxy middleware that enables applying flatmap operations to the proxy response
+func NewFlatmapMiddleware(cfg *config.EndpointConfig) Middleware {
+	formatter := newFlatmapFormatter(cfg.ExtraConfig, "", "")
+	return func(next ...Proxy) Proxy {
+		if len(next) != 1 {
+			panic(ErrTooManyProxies)
+		}
+
+		if formatter == nil {
+			return next[0]
+		}
+
+		return func(ctx context.Context, request *Request) (*Response, error) {
+			resp, err := next[0](ctx, request)
+			if err != nil {
+				return resp, err
+			}
+			r := formatter.Format(*resp)
+			return &r, nil
+		}
+	}
 }

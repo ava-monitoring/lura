@@ -87,6 +87,10 @@ func (r ginRouter) Run(cfg config.ServiceConfig) {
 		r.cfg.Engine.Any("/__debug/*param", DebugHandler(r.cfg.Logger))
 	}
 
+	r.cfg.Engine.GET("/__health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "ok"})
+	})
+
 	r.registerKrakendEndpoints(cfg.Endpoints)
 
 	r.cfg.Engine.NoRoute(func(c *gin.Context) {
@@ -108,16 +112,20 @@ func (r ginRouter) registerKrakendEndpoints(endpoints []*config.EndpointConfig) 
 			continue
 		}
 
-		r.registerKrakendEndpoint(c.Method, c.Endpoint, r.cfg.HandlerFactory(c, proxyStack), len(c.Backend))
+		r.registerKrakendEndpoint(c.Method, c, r.cfg.HandlerFactory(c, proxyStack), len(c.Backend))
 	}
 }
 
-func (r ginRouter) registerKrakendEndpoint(method, path string, handler gin.HandlerFunc, totBackends int) {
+func (r ginRouter) registerKrakendEndpoint(method string, endpoint *config.EndpointConfig, handler gin.HandlerFunc, totBackends int) {
 	method = strings.ToTitle(method)
+	path := endpoint.Endpoint
 	if method != http.MethodGet && totBackends > 1 {
-		r.cfg.Logger.Error(method, "endpoints must have a single backend! Ignoring", path)
-		return
+		if !router.IsValidSequentialEndpoint(endpoint) {
+			r.cfg.Logger.Error(method, " endpoints with sequential enabled is only the last one is allowed to be non GET! Ignoring", path)
+			return
+		}
 	}
+
 	switch method {
 	case http.MethodGet:
 		r.cfg.Engine.GET(path, handler)

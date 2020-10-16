@@ -125,6 +125,12 @@ func testKrakenD(t *testing.T, runRouter func(logging.Logger, *config.ServiceCon
 		expStatusCode int
 	}{
 		{
+			name:    "health_check",
+			url:     "/__health",
+			headers: map[string]string{},
+			expBody: `{"status":"ok"}`,
+		},
+		{
 			name:       "static",
 			url:        "/static",
 			headers:    map[string]string{},
@@ -304,6 +310,12 @@ func testKrakenD(t *testing.T, runRouter func(logging.Logger, *config.ServiceCon
 			},
 			expHeaders: defaultHeaders,
 			expBody:    `{"headers":{"Accept-Encoding":["gzip"],"User-Agent":["KrakenD Version undefined"],"X-Forwarded-For":["123.45.67.89"]}}`,
+		},
+		{
+			method:     "PUT",
+			name:       "sequence-accept",
+			url:        "/sequence-accept",
+			expHeaders: defaultHeaders,
 		},
 	} {
 		tc := tc

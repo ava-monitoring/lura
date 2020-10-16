@@ -77,6 +77,12 @@ type httpRouter struct {
 	RunServer RunServerFunc
 }
 
+// HealthHandler is a dummy http.HandlerFunc implementation for exposing a health check endpoint
+func HealthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"status":"ok"}`))
+}
+
 // Run implements the router interface
 func (r httpRouter) Run(cfg config.ServiceConfig) {
 	if cfg.Debug {
@@ -95,6 +101,7 @@ func (r httpRouter) Run(cfg config.ServiceConfig) {
 			r.cfg.Engine.Handle(r.cfg.DebugPattern, method, debugHandler)
 		}
 	}
+	r.cfg.Engine.Handle("/__health", "GET", http.HandlerFunc(HealthHandler))
 
 	router.InitHTTPDefaultTransport(cfg)
 
@@ -115,15 +122,18 @@ func (r httpRouter) registerKrakendEndpoints(endpoints []*config.EndpointConfig)
 			continue
 		}
 
-		r.registerKrakendEndpoint(c.Method, c.Endpoint, r.cfg.HandlerFactory(c, proxyStack), len(c.Backend))
+		r.registerKrakendEndpoint(c.Method, c, r.cfg.HandlerFactory(c, proxyStack), len(c.Backend))
 	}
 }
 
-func (r httpRouter) registerKrakendEndpoint(method, path string, handler http.HandlerFunc, totBackends int) {
+func (r httpRouter) registerKrakendEndpoint(method string, endpoint *config.EndpointConfig, handler http.HandlerFunc, totBackends int) {
 	method = strings.ToTitle(method)
+	path := endpoint.Endpoint
 	if method != http.MethodGet && totBackends > 1 {
-		r.cfg.Logger.Error(method, "endpoints must have a single backend! Ignoring", path)
-		return
+		if !router.IsValidSequentialEndpoint(endpoint) {
+			r.cfg.Logger.Error(method, " endpoints with sequential enabled is only the last one is allowed to be non GET! Ignoring", path)
+			return
+		}
 	}
 
 	switch method {
