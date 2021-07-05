@@ -1,4 +1,6 @@
-//Package proxy provides proxy and proxy middleware interfaces and implementations.
+/* Package proxy provides proxy and proxy middleware interfaces and implementations.
+ */
+// SPDX-License-Identifier: Apache-2.0
 package proxy
 
 import (
@@ -6,7 +8,7 @@ import (
 	"errors"
 	"io"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 // Namespace to be used in extra config

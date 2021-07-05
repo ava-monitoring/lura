@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
@@ -7,7 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 // Namespace to be used in extra config

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package encoding
 
 import (
@@ -7,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/devopsfaith/krakend/register"
+	"github.com/luraproject/lura/register"
 )
 
 func TestNoOpDecoder(t *testing.T) {

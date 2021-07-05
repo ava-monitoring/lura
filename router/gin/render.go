@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package gin
 
 import (
@@ -5,10 +6,10 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/encoding"
-	"github.com/devopsfaith/krakend/proxy"
 	"github.com/gin-gonic/gin"
+	"github.com/luraproject/lura/config"
+	"github.com/luraproject/lura/encoding"
+	"github.com/luraproject/lura/proxy"
 )
 
 // Render defines the signature of the functions to be use for the final response
@@ -21,10 +22,11 @@ const NEGOTIATE = "negotiate"
 var (
 	mutex          = &sync.RWMutex{}
 	renderRegister = map[string]Render{
-		NEGOTIATE:       negotiatedRender,
-		encoding.STRING: stringRender,
-		encoding.JSON:   jsonRender,
-		encoding.NOOP:   noopRender,
+		NEGOTIATE:         negotiatedRender,
+		encoding.STRING:   stringRender,
+		encoding.JSON:     jsonRender,
+		encoding.NOOP:     noopRender,
+		"json-collection": jsonCollectionRender,
 	}
 )
 
@@ -96,6 +98,20 @@ func jsonRender(c *gin.Context, response *proxy.Response) {
 		return
 	}
 	c.JSON(status, response.Data)
+}
+
+func jsonCollectionRender(c *gin.Context, response *proxy.Response) {
+	status := c.Writer.Status()
+	if response == nil {
+		c.JSON(status, []struct{}{})
+		return
+	}
+	col, ok := response.Data["collection"]
+	if !ok {
+		c.JSON(status, []struct{}{})
+		return
+	}
+	c.JSON(status, col)
 }
 
 func xmlRender(c *gin.Context, response *proxy.Response) {

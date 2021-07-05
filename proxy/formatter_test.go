@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package proxy
 
 import (
@@ -5,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 func TestEntityFormatterFunc(t *testing.T) {
@@ -472,15 +473,11 @@ func TestEntityFormatter_flatmap(t *testing.T) {
 					},
 					map[string]interface{}{
 						"type": "del",
-						"args": []interface{}{"collection.*.b"},
-					},
-					map[string]interface{}{
-						"type": "del",
-						"args": []interface{}{"collection.*.d"},
-					},
-					map[string]interface{}{
-						"type": "del",
-						"args": []interface{}{"collection.*.e"},
+						"args": []interface{}{
+							"collection.*.b",
+							"collection.*.d",
+							"collection.*.e",
+						},
 					},
 					map[string]interface{}{
 						"type": "move",

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package sd
 
 import (
@@ -6,7 +7,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 func TestRoundRobinLB(t *testing.T) {

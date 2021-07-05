@@ -13,7 +13,7 @@
 // 	)
 //
 // 	// HandlerRegisterer is the symbol the plugin loader will try to load. It must implement the Registerer interface
-// 	var HandlerRegisterer = registerer("krakend-example")
+// 	var HandlerRegisterer = registerer("lura-example")
 //
 // 	type registerer string
 //
@@ -40,8 +40,9 @@
 // 	}
 //
 // 	func init() {
-// 		fmt.Println("krakend-example handler plugin loaded!!!")
+// 		fmt.Println("lura-example handler plugin loaded!!!")
 // 	}
 //
 // 	func main() {}
+// SPDX-License-Identifier: Apache-2.0
 package plugin

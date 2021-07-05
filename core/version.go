@@ -1,3 +1,6 @@
+/* Package core contains come basic constants and variables
+ */
+// SPDX-License-Identifier: Apache-2.0
 package core
 
 import "fmt"

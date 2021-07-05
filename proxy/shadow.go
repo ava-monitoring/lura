@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
 package proxy
 
 import (
 	"context"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 const (

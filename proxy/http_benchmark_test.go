@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
 package proxy
 
 import (
 	"context"
 	"testing"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 func BenchmarkNewRequestBuilderMiddleware(b *testing.B) {

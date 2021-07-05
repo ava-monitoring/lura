@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package mux
 
 import (
@@ -5,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/devopsfaith/krakend/logging"
+	"github.com/luraproject/lura/logging"
 )
 
 // DebugHandler creates a dummy handler function, useful for quick integration tests

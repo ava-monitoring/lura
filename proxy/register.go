@@ -1,7 +1,8 @@
+// SPDX-License-Identifier: Apache-2.0
 package proxy
 
 import (
-	"github.com/devopsfaith/krakend/register"
+	"github.com/luraproject/lura/register"
 )
 
 func NewRegister() *Register {

@@ -1,5 +1,6 @@
 // +build !race
 
+// SPDX-License-Identifier: Apache-2.0
 package gin
 
 import (
@@ -14,11 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/logging"
-	"github.com/devopsfaith/krakend/proxy"
-	"github.com/devopsfaith/krakend/router"
 	"github.com/gin-gonic/gin"
+	"github.com/luraproject/lura/config"
+	"github.com/luraproject/lura/logging"
+	"github.com/luraproject/lura/proxy"
+	"github.com/luraproject/lura/router"
 )
 
 func TestDefaultFactory_ok(t *testing.T) {

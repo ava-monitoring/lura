@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
 package sd
 
 import (
 	"testing"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 func TestRegisterSubscriberFactory_ok(t *testing.T) {

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package mux
 
 import (
@@ -8,10 +9,10 @@ import (
 	"net/textproto"
 	"strings"
 
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/core"
-	"github.com/devopsfaith/krakend/proxy"
-	"github.com/devopsfaith/krakend/router"
+	"github.com/luraproject/lura/config"
+	"github.com/luraproject/lura/core"
+	"github.com/luraproject/lura/proxy"
+	"github.com/luraproject/lura/router"
 )
 
 const requestParamsAsterisk string = "*"
@@ -113,7 +114,7 @@ var NewRequest = NewRequestBuilder(NoopParamExtractor)
 func NewRequestBuilder(paramExtractor ParamExtractor) RequestBuilder {
 	return func(r *http.Request, queryString, headersToSend []string) *proxy.Request {
 		params := paramExtractor(r)
-		headers := make(map[string][]string, 2+len(headersToSend))
+		headers := make(map[string][]string, 3+len(headersToSend))
 
 		for _, k := range headersToSend {
 			if k == requestParamsAsterisk {
@@ -128,6 +129,7 @@ func NewRequestBuilder(paramExtractor ParamExtractor) RequestBuilder {
 		}
 
 		headers["X-Forwarded-For"] = []string{clientIP(r)}
+		headers["X-Forwarded-Host"] = []string{r.Host}
 		// if User-Agent is not forwarded using headersToSend, we set
 		// the KrakenD router User Agent value
 		if _, ok := headers["User-Agent"]; !ok {

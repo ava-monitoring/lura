@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package proxy
 
 import (
@@ -5,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/devopsfaith/flatmap/tree"
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 // EntityFormatter formats the response data
@@ -229,7 +230,9 @@ func (e flatmapFormatter) processOps(entity *Response) {
 		case "append":
 			flatten.Append(op.Args[0], op.Args[1])
 		case "del":
-			flatten.Del(op.Args[0])
+			for _, k := range op.Args {
+				flatten.Del(k)
+			}
 		default:
 		}
 	}

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package client
 
 import (
@@ -7,7 +8,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 func TestDetailedHTTPStatusHandler(t *testing.T) {

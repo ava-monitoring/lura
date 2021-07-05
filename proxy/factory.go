@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
 package proxy
 
 import (
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/logging"
-	"github.com/devopsfaith/krakend/sd"
+	"github.com/luraproject/lura/config"
+	"github.com/luraproject/lura/logging"
+	"github.com/luraproject/lura/sd"
 )
 
 // Factory creates proxies based on the received endpoint configuration.
@@ -63,6 +64,7 @@ func (pf defaultFactory) New(cfg *config.EndpointConfig) (p Proxy, err error) {
 		return
 	}
 
+	p = NewPluginMiddleware(cfg)(p)
 	p = NewStaticMiddleware(cfg)(p)
 	return
 }
@@ -83,6 +85,7 @@ func (pf defaultFactory) newSingle(cfg *config.EndpointConfig) (Proxy, error) {
 
 func (pf defaultFactory) newStack(backend *config.Backend) (p Proxy) {
 	p = pf.backendFactory(backend)
+	p = NewBackendPluginMiddleware(backend)(p)
 	p = NewLoadBalancedMiddlewareWithSubscriber(pf.subscriberFactory(backend))(p)
 	if backend.ConcurrentCalls > 1 {
 		p = NewConcurrentMiddleware(backend)(p)

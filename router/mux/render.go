@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package mux
 
 import (
@@ -6,9 +7,9 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/encoding"
-	"github.com/devopsfaith/krakend/proxy"
+	"github.com/luraproject/lura/config"
+	"github.com/luraproject/lura/encoding"
+	"github.com/luraproject/lura/proxy"
 )
 
 // Render defines the signature of the functions to be use for the final response
@@ -21,9 +22,10 @@ const NEGOTIATE = "negotiate"
 var (
 	mutex          = &sync.RWMutex{}
 	renderRegister = map[string]Render{
-		encoding.STRING: stringRender,
-		encoding.JSON:   jsonRender,
-		encoding.NOOP:   noopRender,
+		encoding.STRING:   stringRender,
+		encoding.JSON:     jsonRender,
+		encoding.NOOP:     noopRender,
+		"json-collection": jsonCollectionRender,
 	}
 )
 
@@ -57,7 +59,10 @@ func getWithFallback(key string, fallback Render) Render {
 	return r
 }
 
-var emptyResponse = []byte("{}")
+var (
+	emptyResponse   = []byte("{}")
+	emptyCollection = []byte("[]")
+)
 
 func jsonRender(w http.ResponseWriter, response *proxy.Response) {
 	w.Header().Set("Content-Type", "application/json")
@@ -67,6 +72,26 @@ func jsonRender(w http.ResponseWriter, response *proxy.Response) {
 	}
 
 	js, err := json.Marshal(response.Data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(js)
+}
+
+func jsonCollectionRender(w http.ResponseWriter, response *proxy.Response) {
+	w.Header().Set("Content-Type", "application/json")
+	if response == nil {
+		w.Write(emptyCollection)
+		return
+	}
+	col, ok := response.Data["collection"]
+	if !ok {
+		w.Write(emptyCollection)
+		return
+	}
+
+	js, err := json.Marshal(col)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

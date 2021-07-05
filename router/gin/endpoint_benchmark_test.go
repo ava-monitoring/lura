@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package gin
 
 import (
@@ -10,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/devopsfaith/krakend/config"
-	"github.com/devopsfaith/krakend/proxy"
 	"github.com/gin-gonic/gin"
+	"github.com/luraproject/lura/config"
+	"github.com/luraproject/lura/proxy"
 )
 
 func BenchmarkEndpointHandler_ko(b *testing.B) {

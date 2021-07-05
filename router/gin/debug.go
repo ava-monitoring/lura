@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package gin
 
 import (
@@ -5,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/devopsfaith/krakend/logging"
+	"github.com/luraproject/lura/logging"
 )
 
 // DebugHandler creates a dummy handler function, useful for quick integration tests

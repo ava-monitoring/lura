@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package plugin
 
 import (
@@ -6,7 +7,7 @@ import (
 	"plugin"
 	"testing"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 func TestLoad_ok(t *testing.T) {

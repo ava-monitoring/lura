@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: Apache-2.0
 package proxy
 
 import (
 	"context"
 	"time"
 
-	"github.com/devopsfaith/krakend/logging"
+	"github.com/luraproject/lura/logging"
 )
 
 // NewLoggingMiddleware creates proxy middleware for logging requests and responses

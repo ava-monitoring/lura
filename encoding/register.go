@@ -1,9 +1,10 @@
+// SPDX-License-Identifier: Apache-2.0
 package encoding
 
 import (
 	"io"
 
-	"github.com/devopsfaith/krakend/register"
+	"github.com/luraproject/lura/register"
 )
 
 // GetRegister returns the package register

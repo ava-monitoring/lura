@@ -1,12 +1,16 @@
+/* Package plugin provides tools for loading and registering plugins
+ */
+// SPDX-License-Identifier: Apache-2.0
 package plugin
 
 import (
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"plugin"
 	"strings"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 // Plugin is the interface of the loaded plugins
@@ -33,7 +37,7 @@ func Scan(folder, pattern string) ([]string, error) {
 	plugins := []string{}
 	for _, file := range files {
 		if !file.IsDir() && strings.Contains(file.Name(), pattern) {
-			plugins = append(plugins, folder+file.Name())
+			plugins = append(plugins, filepath.Join(folder, file.Name()))
 		}
 	}
 

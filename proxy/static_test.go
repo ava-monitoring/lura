@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 package proxy
 
 import (
@@ -5,7 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/devopsfaith/krakend/config"
+	"github.com/luraproject/lura/config"
 )
 
 func TestNewStaticMiddleware_multipleNext(t *testing.T) {
