@@ -1,6 +1,8 @@
+//go:build !race
 // +build !race
 
 // SPDX-License-Identifier: Apache-2.0
+
 package gorilla
 
 import (
@@ -12,10 +14,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/luraproject/lura/config"
-	"github.com/luraproject/lura/logging"
-	"github.com/luraproject/lura/proxy"
-	"github.com/luraproject/lura/router"
+	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/logging"
+	"github.com/luraproject/lura/v2/proxy"
+	"github.com/luraproject/lura/v2/transport/http/server"
 )
 
 func TestDefaultFactory_ok(t *testing.T) {
@@ -104,8 +106,8 @@ func TestDefaultFactory_ok(t *testing.T) {
 		if resp.Header.Get("Cache-Control") != "" {
 			t.Error(endpoint.Endpoint, "Cache-Control error:", resp.Header.Get("Cache-Control"))
 		}
-		if resp.Header.Get(router.CompleteResponseHeaderName) != router.HeaderCompleteResponseValue {
-			t.Error(router.CompleteResponseHeaderName, "error:", resp.Header.Get(router.CompleteResponseHeaderName))
+		if resp.Header.Get(server.CompleteResponseHeaderName) != server.HeaderCompleteResponseValue {
+			t.Error(server.CompleteResponseHeaderName, "error:", resp.Header.Get(server.CompleteResponseHeaderName))
 		}
 		if resp.Header.Get("Content-Type") != "application/json" {
 			t.Error(endpoint.Endpoint, "Content-Type error:", resp.Header.Get("Content-Type"))
@@ -239,8 +241,8 @@ func checkResponseIs404(t *testing.T, req *http.Request) {
 	if resp.Header.Get("Cache-Control") != "" {
 		t.Error("Cache-Control error:", resp.Header.Get("Cache-Control"))
 	}
-	if resp.Header.Get(router.CompleteResponseHeaderName) != router.HeaderIncompleteResponseValue {
-		t.Error(req.URL.String(), router.CompleteResponseHeaderName, "error:", resp.Header.Get(router.CompleteResponseHeaderName))
+	if resp.Header.Get(server.CompleteResponseHeaderName) != server.HeaderIncompleteResponseValue {
+		t.Error(req.URL.String(), server.CompleteResponseHeaderName, "error:", resp.Header.Get(server.CompleteResponseHeaderName))
 	}
 	if resp.Header.Get("Content-Type") != "text/plain; charset=utf-8" {
 		t.Error("Content-Type error:", resp.Header.Get("Content-Type"))
@@ -277,6 +279,6 @@ func (e erroredProxyFactory) New(_ *config.EndpointConfig) (proxy.Proxy, error) 
 
 type identityMiddleware struct{}
 
-func (i identityMiddleware) Handler(h http.Handler) http.Handler {
+func (identityMiddleware) Handler(h http.Handler) http.Handler {
 	return h
 }

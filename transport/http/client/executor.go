@@ -1,6 +1,8 @@
-/* Package client provides some http helpers to create http clients and executors
- */
 // SPDX-License-Identifier: Apache-2.0
+
+/*
+	Package client provides some http helpers to create http clients and executors
+*/
 package client
 
 import (
@@ -22,9 +24,7 @@ func DefaultHTTPRequestExecutor(clientFactory HTTPClientFactory) HTTPRequestExec
 type HTTPClientFactory func(ctx context.Context) *http.Client
 
 // NewHTTPClient just returns the http default client
-func NewHTTPClient(ctx context.Context) *http.Client {
-	return defaultHTTPClient
-}
+func NewHTTPClient(_ context.Context) *http.Client { return defaultHTTPClient }
 
 func checkRedirect (req *http.Request, via []*http.Request) error {
         var redirects = via[0].Header.Get("X-Krakend-Follow-Redirects")

@@ -1,5 +1,5 @@
-//go:generate openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -out cert.pem -keyout key.pem -subj "/C=US/ST=California/L=Mountain View/O=Your Organization/OU=Your Unit/CN=localhost"
 // SPDX-License-Identifier: Apache-2.0
+
 package server
 
 import (
@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/luraproject/lura/config"
+	"github.com/luraproject/lura/v2/config"
 )
 
 func init() {
@@ -249,7 +249,8 @@ func Test_parseTLSVersion(t *testing.T) {
 		{in: "TLS10", out: tls.VersionTLS10},
 		{in: "TLS11", out: tls.VersionTLS11},
 		{in: "TLS12", out: tls.VersionTLS12},
-		{in: "Unknown", out: tls.VersionTLS12},
+		{in: "TLS13", out: tls.VersionTLS13},
+		{in: "Unknown", out: tls.VersionTLS13},
 	} {
 		if res := parseTLSVersion(tc.in); res != tc.out {
 			t.Errorf("input %s generated output %d. expected: %d", tc.in, res, tc.out)

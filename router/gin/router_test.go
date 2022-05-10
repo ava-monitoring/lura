@@ -1,6 +1,8 @@
+//go:build !race
 // +build !race
 
 // SPDX-License-Identifier: Apache-2.0
+
 package gin
 
 import (
@@ -16,10 +18,10 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/luraproject/lura/config"
-	"github.com/luraproject/lura/logging"
-	"github.com/luraproject/lura/proxy"
-	"github.com/luraproject/lura/router"
+	"github.com/luraproject/lura/v2/config"
+	"github.com/luraproject/lura/v2/logging"
+	"github.com/luraproject/lura/v2/proxy"
+	"github.com/luraproject/lura/v2/transport/http/server"
 )
 
 func TestDefaultFactory_ok(t *testing.T) {
@@ -83,6 +85,11 @@ func TestDefaultFactory_ok(t *testing.T) {
 				},
 			},
 		},
+		ExtraConfig: map[string]interface{}{
+			Namespace: map[string]interface{}{
+				"auto_options": true,
+			},
+		},
 	}
 
 	go func() { r.Run(serviceCfg) }()
@@ -108,8 +115,8 @@ func TestDefaultFactory_ok(t *testing.T) {
 		if resp.Header.Get("Cache-Control") != "" {
 			t.Error("Cache-Control error:", resp.Header.Get("Cache-Control"))
 		}
-		if resp.Header.Get(router.CompleteResponseHeaderName) != router.HeaderCompleteResponseValue {
-			t.Error(router.CompleteResponseHeaderName, "error:", resp.Header.Get(router.CompleteResponseHeaderName))
+		if resp.Header.Get(server.CompleteResponseHeaderName) != server.HeaderCompleteResponseValue {
+			t.Error(server.CompleteResponseHeaderName, "error:", resp.Header.Get(server.CompleteResponseHeaderName))
 		}
 		if resp.Header.Get("Content-Type") != "application/json; charset=utf-8" {
 			t.Error("Content-Type error:", resp.Header.Get("Content-Type"))
@@ -123,6 +130,18 @@ func TestDefaultFactory_ok(t *testing.T) {
 		if content != expectedBody {
 			t.Error("Unexpected body:", content, "expected:", expectedBody)
 		}
+	}
+
+	req, _ := http.NewRequest("OPTIONS", "http://127.0.0.1:8072/some", nil)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Error("Making the request:", err.Error())
+		return
+	}
+
+	if allow := resp.Header.Get("Allow"); allow != "DELETE, GET, PATCH, POST, PUT" {
+		t.Errorf("unexpected options response: '%s'", allow)
 	}
 }
 
@@ -254,7 +273,7 @@ func TestRunServer_ko(t *testing.T) {
 	serviceCfg := config.ServiceConfig{}
 	r.Run(serviceCfg)
 	re := regexp.MustCompile(errorMsg)
-	if !re.MatchString(string(buff.Bytes())) {
+	if !re.MatchString(buff.String()) {
 		t.Errorf("the logger doesn't contain the expected msg: %s", buff.Bytes())
 	}
 }
@@ -275,9 +294,6 @@ func checkResponseIs404(t *testing.T, req *http.Request) {
 	content := string(body)
 	if resp.Header.Get("Cache-Control") != "" {
 		t.Error(req.URL.String(), "Cache-Control error:", resp.Header.Get("Cache-Control"))
-	}
-	if resp.Header.Get(router.CompleteResponseHeaderName) != router.HeaderIncompleteResponseValue {
-		t.Error(req.URL.String(), router.CompleteResponseHeaderName, "error:", resp.Header.Get(router.CompleteResponseHeaderName))
 	}
 	if resp.Header.Get("Content-Type") != "text/plain" {
 		t.Error(req.URL.String(), "Content-Type error:", resp.Header.Get("Content-Type"))
