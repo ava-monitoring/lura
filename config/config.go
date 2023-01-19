@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /*
-	Package config defines the config structs and some config parser interfaces and implementations
+Package config defines the config structs and some config parser interfaces and implementations
 */
 package config
 
@@ -19,6 +19,8 @@ import (
 	"time"
 
 	"github.com/luraproject/lura/v2/encoding"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -156,12 +158,16 @@ type ServiceConfig struct {
 	TLS *TLS `mapstructure:"tls"`
 
 	// run lura in debug mode
-	Debug     bool
+	Debug     bool `mapstructure:"debug_endpoint"`
 	uriParser URIParser
 
 	// SequentialStart flags if the agents should be started sequentially
 	// before starting the router
 	SequentialStart bool `mapstructure:"sequential_start"`
+
+	// AllowInsecureConnections sets the http client tls configuration to allow
+	// insecure connections to the backends for development (enables InsecureSkipVerify)
+	AllowInsecureConnections bool `mapstructure:"allow_insecure_connections"`
 }
 
 // AsyncAgent defines the configuration of a single subscriber/consumer to be initialized
@@ -270,12 +276,14 @@ type TLS struct {
 	IsDisabled               bool     `mapstructure:"disabled"`
 	PublicKey                string   `mapstructure:"public_key"`
 	PrivateKey               string   `mapstructure:"private_key"`
+	CaCerts                  []string `mapstructure:"ca_certs"`
 	MinVersion               string   `mapstructure:"min_version"`
 	MaxVersion               string   `mapstructure:"max_version"`
 	CurvePreferences         []uint16 `mapstructure:"curve_preferences"`
 	PreferServerCipherSuites bool     `mapstructure:"prefer_server_cipher_suites"`
 	CipherSuites             []uint16 `mapstructure:"cipher_suites"`
 	EnableMTLS               bool     `mapstructure:"enable_mtls"`
+	DisableSystemCaPool      bool     `mapstructure:"disable_system_ca_pool"`
 }
 
 // ExtraConfig is a type to store extra configurations for customized behaviours
@@ -536,6 +544,7 @@ func (s *ServiceConfig) initBackendURLMappings(e, b int, inputParams map[string]
 		}
 	}
 
+	title := cases.Title(language.Und)
 	backend.URLKeys = []string{}
 	for _, output := range outputParams {
 		if !sequentialParamsPattern.MatchString(output) {
@@ -550,7 +559,7 @@ func (s *ServiceConfig) initBackendURLMappings(e, b int, inputParams map[string]
 				}
 			}
 		}
-		key := strings.Title(output[:1]) + output[1:]
+		key := title.String(output[:1]) + output[1:]
 		backend.URLPattern = strings.ReplaceAll(backend.URLPattern, "{"+output+"}", "{{."+key+"}}")
 		backend.URLKeys = append(backend.URLKeys, key)
 	}

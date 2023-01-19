@@ -1,3 +1,4 @@
+//go:build integration || !race
 // +build integration !race
 
 // SPDX-License-Identifier: Apache-2.0
@@ -8,7 +9,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -43,14 +44,14 @@ func TestLoadWithLogger(t *testing.T) {
 		},
 	})
 
-	req, _ := http.NewRequest("GET", "http://some.example.tld/path", nil)
+	req, _ := http.NewRequest("GET", "http://some.example.tld/path", http.NoBody)
 	resp, err := h(context.Background(), req)
 	if err != nil {
 		t.Errorf("unexpected error: %s", err.Error())
 		return
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Error(err)
 		return

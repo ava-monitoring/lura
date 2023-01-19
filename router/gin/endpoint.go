@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"net/textproto"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 
@@ -68,12 +67,18 @@ func CustomErrorEndpointHandler(logger logging.Logger, errF server.ToHTTPError) 
 
 			c.Header(server.CompleteResponseHeaderName, complete)
 
+			for _, err := range c.Errors {
+				logger.Error(logPrefix, err.Error())
+			}
+
 			if err != nil {
 				if t, ok := err.(multiError); ok {
 					for i, errN := range t.Errors() {
+						c.Error(errN)
 						logger.Error(fmt.Sprintf("%s Error #%d: %s", logPrefix, i, errN.Error()))
 					}
 				} else {
+					c.Error(err)
 					logger.Error(logPrefix, err.Error())
 				}
 
@@ -84,6 +89,9 @@ func CustomErrorEndpointHandler(logger logging.Logger, errF server.ToHTTPError) 
 						c.Status(errF(err))
 					}
 					if returnErrorMsg {
+						if te, ok := err.(encodedResponseError); ok && te.Encoding() != "" {
+							c.Header("Content-Type", te.Encoding())
+						}
 						c.Writer.WriteString(err.Error())
 					}
 					cancel()
@@ -106,7 +114,7 @@ func NewRequest(headersToSend []string) func(*gin.Context, []string) *proxy.Requ
 	return func(c *gin.Context, queryString []string) *proxy.Request {
 		params := make(map[string]string, len(c.Params))
 		for _, param := range c.Params {
-			params[strings.Title(param.Key[:1])+param.Key[1:]] = param.Value
+			params[textproto.CanonicalMIMEHeaderKey(param.Key[:1])+param.Key[1:]] = param.Value
 		}
 
 		headers := make(map[string][]string, 3+len(headersToSend))
@@ -148,6 +156,7 @@ func NewRequest(headersToSend []string) func(*gin.Context, []string) *proxy.Requ
 		}
 
 		return &proxy.Request{
+			Path:    c.Request.URL.Path,
 			Method:  c.Request.Method,
 			Query:   query,
 			Body:    c.Request.Body,
@@ -155,6 +164,11 @@ func NewRequest(headersToSend []string) func(*gin.Context, []string) *proxy.Requ
 			Headers: headers,
 		}
 	}
+}
+
+type encodedResponseError interface {
+	responseError
+	Encoding() string
 }
 
 type responseError interface {

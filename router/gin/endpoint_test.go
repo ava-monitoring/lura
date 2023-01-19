@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -130,8 +130,9 @@ func TestEndpointHandler_errored(t *testing.T) {
 }
 
 func TestEndpointHandler_errored_responseError(t *testing.T) {
+	expectedBody := "this is a dummy error"
 	p := func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
-		return nil, dummyResponseError{err: "this is a dummy error", status: http.StatusTeapot}
+		return nil, dummyResponseError{err: expectedBody, status: http.StatusTeapot}
 	}
 	endpointHandlerTestCase{
 		timeout:            10,
@@ -144,6 +145,41 @@ func TestEndpointHandler_errored_responseError(t *testing.T) {
 		completed:          false,
 	}.test(t)
 	time.Sleep(5 * time.Millisecond)
+
+	// Same test case but with body (return_error_msg enabled)
+	returnErrorMsg = true
+	endpointHandlerTestCase{
+		timeout:            10,
+		proxy:              p,
+		method:             "GET",
+		expectedBody:       expectedBody,
+		expectedCache:      "",
+		expectedContent:    "",
+		expectedStatusCode: http.StatusTeapot,
+		completed:          false,
+	}.test(t)
+	time.Sleep(5 * time.Millisecond)
+	returnErrorMsg = false
+}
+
+func TestEndpointHandler_errored_encodedResponseError(t *testing.T) {
+	expectedBody := `{ "message": "this is a dummy error" }`
+	p := func(_ context.Context, _ *proxy.Request) (*proxy.Response, error) {
+		return nil, dummyEncodedResponseError{dummyResponseError: dummyResponseError{err: expectedBody, status: http.StatusTeapot}, encoding: "application/json"}
+	}
+	returnErrorMsg = true
+	endpointHandlerTestCase{
+		timeout:            10,
+		proxy:              p,
+		method:             "GET",
+		expectedBody:       expectedBody,
+		expectedCache:      "",
+		expectedContent:    "application/json",
+		expectedStatusCode: http.StatusTeapot,
+		completed:          false,
+	}.test(t)
+	time.Sleep(5 * time.Millisecond)
+	returnErrorMsg = false
 }
 
 type dummyResponseError struct {
@@ -157,6 +193,15 @@ func (d dummyResponseError) Error() string {
 
 func (d dummyResponseError) StatusCode() int {
 	return d.status
+}
+
+type dummyEncodedResponseError struct {
+	dummyResponseError
+	encoding string
+}
+
+func (d dummyEncodedResponseError) Encoding() string {
+	return d.encoding
 }
 
 func TestEndpointHandler_incompleteAndErrored(t *testing.T) {
@@ -258,7 +303,7 @@ func TestCustomErrorEndpointHandler(t *testing.T) {
 	req, _ := http.NewRequest(
 		"GET",
 		"http://127.0.0.1:8080/_gin_endpoint/a?a=42&b=1&c[]=x&c[]=y&d=1&d=2",
-		ioutil.NopCloser(&bytes.Buffer{}),
+		io.NopCloser(&bytes.Buffer{}),
 	)
 	req.Header.Set("Content-Type", "application/json")
 
@@ -303,14 +348,14 @@ func (tc endpointHandlerTestCase) test(t *testing.T) {
 	req, _ := http.NewRequest(
 		tc.method,
 		"http://127.0.0.1:8080/_gin_endpoint/a?a=42&b=1&c[]=x&c[]=y&d=1&d=2",
-		ioutil.NopCloser(&bytes.Buffer{}),
+		io.NopCloser(&bytes.Buffer{}),
 	)
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
 	s.ServeHTTP(w, req)
 
-	body, ioerr := ioutil.ReadAll(w.Result().Body)
+	body, ioerr := io.ReadAll(w.Result().Body)
 	if ioerr != nil {
 		t.Error("Reading the response:", ioerr.Error())
 		return

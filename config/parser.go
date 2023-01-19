@@ -5,7 +5,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 )
@@ -24,7 +23,7 @@ func (f ParserFunc) Parse(configFile string) (ServiceConfig, error) { return f(c
 
 // NewParser creates a new parser using the json library
 func NewParser() Parser {
-	return NewParserWithFileReader(ioutil.ReadFile)
+	return NewParserWithFileReader(os.ReadFile)
 }
 
 // NewParserWithFileReader returns a Parser with the injected FileReaderFunc function
@@ -77,7 +76,7 @@ func CheckErr(err error, configFile string) error {
 
 // NewParseError returns a new ParseError
 func NewParseError(err error, configFile string, offset int) *ParseError {
-	b, _ := ioutil.ReadFile(configFile)
+	b, _ := os.ReadFile(configFile)
 	row, col := getErrorRowCol(b, offset)
 	return &ParseError{
 		ConfigFile: configFile,
@@ -148,6 +147,7 @@ type parseableServiceConfig struct {
 	ReadHeaderTimeout     string                     `json:"read_header_timeout"`
 	DisableKeepAlives     bool                       `json:"disable_keep_alives"`
 	DisableCompression    bool                       `json:"disable_compression"`
+	DisableStrictREST     bool                       `json:"disable_rest"`
 	MaxIdleConns          int                        `json:"max_idle_connections"`
 	MaxIdleConnsPerHost   int                        `json:"max_idle_connections_per_host"`
 	IdleConnTimeout       string                     `json:"idle_connection_timeout"`
@@ -157,9 +157,9 @@ type parseableServiceConfig struct {
 	DialerTimeout         string                     `json:"dialer_timeout"`
 	DialerFallbackDelay   string                     `json:"dialer_fallback_delay"`
 	DialerKeepAlive       string                     `json:"dialer_keep_alive"`
-	Debug                 bool
-	Plugin                *Plugin       `json:"plugin,omitempty"`
-	TLS                   *parseableTLS `json:"tls,omitempty"`
+	Debug                 bool                       `json:"debug_endpoint"`
+	Plugin                *Plugin                    `json:"plugin,omitempty"`
+	TLS                   *parseableTLS              `json:"tls,omitempty"`
 }
 
 func (p *parseableServiceConfig) normalize() ServiceConfig {
@@ -177,6 +177,7 @@ func (p *parseableServiceConfig) normalize() ServiceConfig {
 		ReadHeaderTimeout:     parseDuration(p.ReadHeaderTimeout),
 		DisableKeepAlives:     p.DisableKeepAlives,
 		DisableCompression:    p.DisableCompression,
+		DisableStrictREST:     p.DisableStrictREST,
 		MaxIdleConns:          p.MaxIdleConns,
 		MaxIdleConnsPerHost:   p.MaxIdleConnsPerHost,
 		IdleConnTimeout:       parseDuration(p.IdleConnTimeout),
@@ -193,12 +194,14 @@ func (p *parseableServiceConfig) normalize() ServiceConfig {
 			IsDisabled:               p.TLS.IsDisabled,
 			PublicKey:                p.TLS.PublicKey,
 			PrivateKey:               p.TLS.PrivateKey,
+			CaCerts:                  p.TLS.CaCerts,
 			MinVersion:               p.TLS.MinVersion,
 			MaxVersion:               p.TLS.MaxVersion,
 			CurvePreferences:         p.TLS.CurvePreferences,
 			PreferServerCipherSuites: p.TLS.PreferServerCipherSuites,
 			CipherSuites:             p.TLS.CipherSuites,
 			EnableMTLS:               p.TLS.EnableMTLS,
+			DisableSystemCaPool:      p.TLS.DisableSystemCaPool,
 		}
 	}
 	if p.ExtraConfig != nil {
@@ -221,12 +224,14 @@ type parseableTLS struct {
 	IsDisabled               bool     `json:"disabled"`
 	PublicKey                string   `json:"public_key"`
 	PrivateKey               string   `json:"private_key"`
+	CaCerts                  []string `json:"ca_certs"`
 	MinVersion               string   `json:"min_version"`
 	MaxVersion               string   `json:"max_version"`
 	CurvePreferences         []uint16 `json:"curve_preferences"`
 	PreferServerCipherSuites bool     `json:"prefer_server_cipher_suites"`
 	CipherSuites             []uint16 `json:"cipher_suites"`
 	EnableMTLS               bool     `json:"enable_mtls"`
+	DisableSystemCaPool      bool     `json:"disable_system_ca_pool"`
 }
 
 type parseableEndpointConfig struct {
@@ -235,7 +240,7 @@ type parseableEndpointConfig struct {
 	Backend         []*parseableBackend `json:"backend"`
 	ConcurrentCalls int                 `json:"concurrent_calls"`
 	Timeout         string              `json:"timeout"`
-	CacheTTL        int                 `json:"cache_ttl"`
+	CacheTTL        string              `json:"cache_ttl"`
 	QueryString     []string            `json:"input_query_strings"`
 	ExtraConfig     *ExtraConfig        `json:"extra_config,omitempty"`
 	HeadersToPass   []string            `json:"input_headers"`
@@ -248,7 +253,7 @@ func (p *parseableEndpointConfig) normalize() *EndpointConfig {
 		Method:          p.Method,
 		ConcurrentCalls: p.ConcurrentCalls,
 		Timeout:         parseDuration(p.Timeout),
-		CacheTTL:        time.Duration(p.CacheTTL) * time.Second,
+		CacheTTL:        parseDuration(p.CacheTTL),
 		QueryString:     p.QueryString,
 		HeadersToPass:   p.HeadersToPass,
 		OutputEncoding:  p.OutputEncoding,
